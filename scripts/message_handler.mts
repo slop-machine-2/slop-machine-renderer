@@ -15,7 +15,7 @@ const execPromise = promisify(exec);
 
 const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobData>) => {
   const folderPath = job.data.folderPath;
-  const outputName = job.data.outputName;
+  // const outputName = job.data.outputName;
   // const config = job.data.config;
 
   console.log(`Starting asset sync for: ${folderPath}`);
@@ -47,7 +47,7 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
       concurrency: 1,
       serveUrl: bundleLocation,
       codec: "h264",
-      outputLocation: `/out/${outputName}.mp4`,
+      outputLocation: `${folderPath}/render.mp4`,
       // inputProps: config,
     });
 

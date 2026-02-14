@@ -8,6 +8,6 @@ export interface SentenceManifest {
   sentence: string;
   stance: string;
   illustration: string;
-  illustrationVideoUrl?: string;
+  illustrationVideo?: object;
   wordsAlignment: WordAlignment[];
 }
