@@ -1,4 +1,4 @@
-import {Img, staticFile, useCurrentFrame, spring, useVideoConfig, interpolate} from "remotion";
+import {Img, staticFile, useCurrentFrame, spring, useVideoConfig, interpolate, random} from "remotion";
 
 const PERSONA_WIDTH = 700;
 
@@ -18,10 +18,10 @@ export const Persona: React.FC<{ stance: string; seed: number }> = ({ stance, se
   // Maps the spring's 0-1 movement to your desired 0.8-1.0 size range
   const scale = interpolate(entrance, [0, 1], [0.8, 1]);
 
-  const randomX = Math.floor((Math.abs(Math.sin(seed) * (width * 0.6))) + (width * 0.2));
-  const maxY = height * 0.4;
   const minY = height * 0.1;
-  const randomY = Math.floor(Math.abs(Math.cos(seed) * maxY + minY));
+  const maxY = height * 0.4;
+  const randomX = Math.floor(random(seed + "x") * (width * 0.6) + (width * 0.2));
+  const randomY = Math.floor(random(seed + "y") * (maxY - minY) + minY);
 
   return (
     <div style={{

@@ -98,7 +98,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
             from={startFrame}
             durationInFrames={file.durationInFrames}
           >
-            <Persona stance={file.sentence.stance} seed={index} />
+            <Persona stance={file.sentence.stance} seed={seed + index} />
             <AudioSegmentContent file={file} fps={FPS} />
           </Sequence>
         );
