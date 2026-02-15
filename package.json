@@ -31,7 +31,8 @@
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
     "copy-assets": "npx -y tsx scripts/copy_assets.mts",
-    "listen-messages": "npx -y tsx scripts/message_handler.mts"
+    "listen-messages": "npx -y tsx scripts/message_handler.mts",
+    "entrypoint-devmode": "npx -y tsx scripts/entrypoint_devmode.mts"
   },
   "sideEffects": [
     "*.css"
