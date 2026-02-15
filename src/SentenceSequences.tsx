@@ -1,4 +1,4 @@
-import {Html5Audio, Html5Video, Sequence, staticFile} from "remotion";
+import {Html5Audio, Html5Video, random, Sequence, staticFile} from "remotion";
 import { z } from "zod";
 import {AudioSegmentContent} from "./AudioSegmentContent";
 import {Persona} from "./Persona";
@@ -14,15 +14,26 @@ export const SentenceSequenceSchema = z.object({
 
 export const SentenceSequencesSchema = z.object({
   audioFiles: z.array(SentenceSequenceSchema),
+  seed: z.number(),
+  satisfyingTotalFrames: z.number(),
+  durationInFrames: z.number(),
 });
 
 type SentenceSequencesProps = z.infer<typeof SentenceSequencesSchema>;
 export type SentenceSequenceProps = z.infer<typeof SentenceSequenceSchema>;
 
-export const SentenceSequences: React.FC<SentenceSequencesProps> = ({ audioFiles }) => {
+export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
+  audioFiles,
+  seed,
+  satisfyingTotalFrames,
+  durationInFrames
+}) => {
   let cumulativeFramesTrippy = 0;
   let cumulativeFrames = 0;
   const FPS = 30;
+
+  const maxStartFrame = Math.max(0, satisfyingTotalFrames - durationInFrames);
+  const randomStartFrame = Math.floor(random(seed) * maxStartFrame);
 
   return (
     <>
@@ -39,6 +50,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({ audioFiles
         <Html5Video
           src={staticFile("satisfying.webm")}
           style={{ width: '100%', height: '101%', objectFit: 'cover' }}
+          startFrom={randomStartFrame}
           muted
           loop
         />

@@ -9,6 +9,8 @@ export type PersonaConfig = {
 }
 
 export type ConfigManifest = {
+  seed: number,
+  satisfyingVideo: string,
   persona: PersonaConfig,
   sentences: SentenceManifest[]
 };

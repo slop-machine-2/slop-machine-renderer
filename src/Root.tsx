@@ -1,5 +1,6 @@
 import "./index.css";
 import { Composition, staticFile } from "remotion";
+import {parseMedia} from '@remotion/media-parser';
 import { SentenceSequences, SentenceSequencesSchema } from "./SentenceSequences";
 import {SentenceManifest} from "./types/sentenceManifest";
 import {ConfigManifest} from "./types/configManifest";
@@ -13,6 +14,9 @@ export const RemotionRoot: React.FC = () => {
         id="DynamicShortVideo"
         durationInFrames={1}
         defaultProps={{
+          seed: 0,
+          satisfyingTotalFrames: 0,
+          durationInFrames: 1,
           audioFiles: [] as {
             sentence: SentenceManifest,
             audioPath: string,
@@ -59,10 +63,23 @@ export const RemotionRoot: React.FC = () => {
             // 3. Calculate total timeline length
             const totalFrames = audioFiles.reduce((acc, file) => acc + file.durationInFrames, 0);
 
+            const satisfyingVideoData = await parseMedia({
+              src: staticFile('satisfying.webm'),
+              fields: {
+                durationInSeconds: true,
+              },
+            });
+
+            const satisfyingTotalFrames = Math.floor(satisfyingVideoData.durationInSeconds! * FPS);
+            const durationInFrames = Math.max(1, totalFrames);
+
             return {
-              durationInFrames: Math.max(1, totalFrames),
+              durationInFrames,
               props: {
+                seed: config.seed,
+                satisfyingTotalFrames,
                 audioFiles,
+                durationInFrames
               },
             };
           } catch (err) {

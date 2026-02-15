@@ -69,16 +69,10 @@ async function copyAssets() {
     await cp(personaSource, personaDest, { recursive: true, force: true });
 
     // 5. Copy a random satisfying video
-    const satisfyingDir = '/assets/satisfying';
-    const satisfyingFiles = await readdir(satisfyingDir);
-    const videoFile = satisfyingFiles[Math.floor(Math.random() * satisfyingFiles.length)];
-
-    if (videoFile) {
-      const videoSource = join(satisfyingDir, videoFile);
-      const videoDest = join(destinationPath, 'satisfying.webm');
-      console.log(`🎥 Copying video: ${videoFile} -> satisfying.webm`);
-      await cp(videoSource, videoDest, { force: true });
-    }
+    const videoFile = configData.satisfyingVideo;
+    const videoDest = join(destinationPath, 'satisfying.webm');
+    console.log(`🎥 Copying video: ${videoFile} -> satisfying.webm`);
+    await cp(videoFile, videoDest, { force: true });
 
     // 6. Copy the theme audio
     const audioSource = `/assets/themes/${theme}.ogg`;
