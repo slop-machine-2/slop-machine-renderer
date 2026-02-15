@@ -1,8 +1,7 @@
-FROM node:22-bookworm-slim
+FROM oven/bun:latest
 
 # Install Chrome dependencies
-RUN apt-get update
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
   libnss3 \
   libdbus-1-3 \
   libatk1.0-0 \
@@ -17,26 +16,27 @@ RUN apt-get install -y \
   libpango-1.0-0 \
   libcairo2 \
   libcups2 \
-  fonts-noto-color-emoji
-RUN rm -rf /var/lib/apt/lists/*
+  fonts-noto-color-emoji \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN chown -R node:node /app
+# The official Bun image uses the 'bun' user
+RUN chown -R bun:bun /app
 
-USER node
+USER bun
 
-# Copy package files first (better caching)
-COPY --chown=node:node package.json package*.json tsconfig.json* remotion.config.* ./
+# Copy package files (including bun.lockb if you have it)
+COPY --chown=bun:bun package.json bun.lock* tsconfig.json* remotion.config.* ./
 
-# Install dependencies as the node user
-RUN npm i
+# Install dependencies using Bun
+RUN bun install
 
 # Install Chrome
-# Remotion will download Chromium to /home/node/.cache/remotion/browser
-RUN npx remotion browser ensure
+# Remotion will download Chromium to /home/bun/.cache/remotion/browser
+RUN bunx remotion browser ensure
 
 # Copy the rest of the source code
-COPY --chown=node:node src ./src
+COPY --chown=bun:bun src ./src
 
-CMD ["npx", "remotion", "preview"]
+CMD ["bunx", "remotion", "preview"]

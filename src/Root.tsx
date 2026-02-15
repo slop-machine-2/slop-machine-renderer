@@ -64,6 +64,7 @@ export const RemotionRoot: React.FC = () => {
             const totalFrames = audioFiles.reduce((acc, file) => acc + file.durationInFrames, 0);
 
             const satisfyingVideoData = await parseMedia({
+              acknowledgeRemotionLicense: true,
               src: staticFile('satisfying.webm'),
               fields: {
                 durationInSeconds: true,

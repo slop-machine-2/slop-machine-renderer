@@ -22,7 +22,7 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
 
   try {
     // 0. Run the asset copy script before rendering
-    const { stdout, stderr } = await execPromise(`npm run copy-assets "${folderPath}"`);
+    const { stdout, stderr } = await execPromise(`bun run copy-assets "${folderPath}"`);
     console.log('Sync Output:', stdout);
     if (stderr) console.warn('Sync Warning:', stderr);
 
