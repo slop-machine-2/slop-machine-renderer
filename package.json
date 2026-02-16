@@ -23,7 +23,8 @@
     "@types/web": "0.0.166",
     "eslint": "9.26.0",
     "prettier": "3.6.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@types/bun": "latest"
   },
   "scripts": {
     "dev": "remotion studio",

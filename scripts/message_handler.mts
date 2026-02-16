@@ -4,6 +4,7 @@ import {Job, Worker} from 'bullmq';
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import path from "path";
+import {unlink} from "node:fs/promises";
 
 type VideoRenderingJobData = {
   folderPath: string;
@@ -42,14 +43,22 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
     });
 
     // 3. Render to the shared volume
+    const tempPath = `/tmp/render-${Date.now()}.mp4`;
     await renderMedia({
       composition,
       concurrency: 1,
       serveUrl: bundleLocation,
       codec: "h264",
-      outputLocation: `${folderPath}/render.mp4`,
+      outputLocation: tempPath,
       // inputProps: config,
     });
+
+    try {
+      const tempFile = Bun.file(tempPath);
+      await Bun.s3.write(`${folderPath}/render.mp4`, tempFile);
+    } finally {
+      await unlink(tempPath);
+    }
 
     console.log("Render finished!");
   } catch (error) {
