@@ -4,6 +4,7 @@ import {AudioSegmentContent} from "./AudioSegmentContent";
 import {Persona} from "./Persona";
 import {TrippyBackground} from "./TrippyBackground";
 import {SentenceManifest} from "./types/sentenceManifest";
+import {OutputConfig} from "./types/configManifest";
 
 export const SentenceSequenceSchema = z.object({
   sentence: z.custom<SentenceManifest>(),
@@ -13,28 +14,26 @@ export const SentenceSequenceSchema = z.object({
 });
 
 export const SentenceSequencesSchema = z.object({
+  config: z.custom<OutputConfig>(),
   audioFiles: z.array(SentenceSequenceSchema),
-  seed: z.number(),
   satisfyingTotalFrames: z.number(),
   durationInFrames: z.number(),
-  fps: z.number(),
 });
 
 type SentenceSequencesProps = z.infer<typeof SentenceSequencesSchema>;
 export type SentenceSequenceProps = z.infer<typeof SentenceSequenceSchema>;
 
 export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
+  config,
   audioFiles,
-  seed,
   satisfyingTotalFrames,
   durationInFrames,
-  fps
 }) => {
   let cumulativeFramesTrippy = 0;
   let cumulativeFrames = 0;
 
   const maxStartFrame = Math.max(0, satisfyingTotalFrames - durationInFrames);
-  const randomStartFrame = Math.floor(random(seed) * maxStartFrame);
+  const randomStartFrame = Math.floor(random(config.seed) * maxStartFrame);
 
   return (
     <>
@@ -57,7 +56,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
         />
       </div>
 
-      <Html5Audio src={staticFile("theme.ogg")} volume={0.2} loop />
+      <Html5Audio src={staticFile("theme.ogg")} volume={config.persona.themeVolume} loop />
 
       {/* 2. Dynamic Content Layer (Background + Persona + Audio) */}
       {/* The Dynamic Background for this specific segment */}
@@ -99,8 +98,8 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
             from={startFrame}
             durationInFrames={file.durationInFrames}
           >
-            <Persona stance={file.sentence.stance} seed={seed + index} />
-            <AudioSegmentContent file={file} fps={fps} />
+            <Persona stance={file.sentence.stance} seed={config.seed + index} />
+            <AudioSegmentContent file={file} fps={config.video.fps} />
           </Sequence>
         );
       })}

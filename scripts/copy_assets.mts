@@ -1,7 +1,7 @@
 import { rm, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { exit, argv } from 'node:process';
-import {ConfigManifest} from "../src/types/configManifest";
+import {OutputConfig} from "../src/types/configManifest";
 
 async function copyS3FolderToLocal(sourcePath: string, destinationPath: string) {
   console.log(`🚚 Copying assets from ${sourcePath} to ${destinationPath}...`);
@@ -36,7 +36,7 @@ async function copyAssets() {
 
   try {
     const configPath = join(manualPath, 'config.json');
-    const configData: ConfigManifest = await Bun.s3.file(configPath).json();
+    const configData: OutputConfig = await Bun.s3.file(configPath).json();
 
     const { personaName, theme } = configData.persona;
 

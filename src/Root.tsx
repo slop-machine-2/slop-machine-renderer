@@ -3,9 +3,7 @@ import { Composition, staticFile } from "remotion";
 import {parseMedia} from '@remotion/media-parser';
 import { SentenceSequences, SentenceSequencesSchema } from "./SentenceSequences";
 import {SentenceManifest} from "./types/sentenceManifest";
-import {ConfigManifest} from "./types/configManifest";
-
-const FPS = 60;
+import {OutputConfig} from "./types/configManifest";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -13,11 +11,30 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="DynamicShortVideo"
         durationInFrames={1}
+        fps={1}
         defaultProps={{
-          seed: 0,
+          config: {
+            seed: 0,
+            video: {
+              fps: 1
+            },
+            persona: {
+              personaName: '',
+              theme: '',
+              themeVolume: 0,
+              language: 'en-US',
+              promptPersonality: '',
+              promptVideoMeta: '',
+              stances: [],
+              elevenLabsVoiceId: '',
+              kokoroVoiceId: ''
+            },
+            sentences: [],
+            topic: {},
+            satisfyingVideo: ''
+          },
           satisfyingTotalFrames: 0,
           durationInFrames: 1,
-          fps: FPS,
           audioFiles: [] as {
             sentence: SentenceManifest,
             audioPath: string,
@@ -27,7 +44,6 @@ export const RemotionRoot: React.FC = () => {
         }}
         component={SentenceSequences}
         schema={SentenceSequencesSchema}
-        fps={FPS}
         width={1080}
         height={1920}
         calculateMetadata={async () => {
@@ -38,7 +54,7 @@ export const RemotionRoot: React.FC = () => {
               throw new Error("Could not load config.json");
             }
 
-            const config: ConfigManifest = await manifestResponse.json();
+            const config: OutputConfig = await manifestResponse.json();
             const sentences = config.sentences;
 
             // 2. Map through the known sentences to get subs and audio
@@ -50,7 +66,7 @@ export const RemotionRoot: React.FC = () => {
 
                 // Calculate duration based on the last timestamp in the sub file
                 const lastWordEnd = sentence.wordsAlignment.length > 0 ? sentence.wordsAlignment[sentence.wordsAlignment.length - 1].end : 0;
-                const durationInFrames = Math.ceil(lastWordEnd * FPS);
+                const durationInFrames = Math.ceil(lastWordEnd * config.video.fps);
 
                 return {
                   sentence,
@@ -72,17 +88,17 @@ export const RemotionRoot: React.FC = () => {
               },
             });
 
-            const satisfyingTotalFrames = Math.floor(satisfyingVideoData.durationInSeconds! * FPS);
+            const satisfyingTotalFrames = Math.floor(satisfyingVideoData.durationInSeconds! * config.video.fps);
             const durationInFrames = Math.max(1, totalFrames);
 
             return {
               durationInFrames,
+              fps: config.video.fps,
               props: {
-                seed: config.seed,
+                config,
                 satisfyingTotalFrames,
                 audioFiles,
                 durationInFrames,
-                fps: FPS
               },
             };
           } catch (err) {

@@ -33,8 +33,8 @@ export const TrippyBackground: React.FC<{ children?: React.ReactNode }> = ({ chi
 
   const contentContainer: React.CSSProperties = {
     position: 'relative',
-    width: '90%', // Adjust these values to change border thickness
-    height: '85%',
+    width: '95%', // Adjust these values to change border thickness
+    height: '95%',
     backgroundColor: 'black', // The "cutout" for your content
     borderRadius: '20px',
     boxShadow: '0 0 50px rgba(0,0,0,0.5)',
