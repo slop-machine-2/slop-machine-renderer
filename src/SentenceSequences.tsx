@@ -17,6 +17,7 @@ export const SentenceSequencesSchema = z.object({
   seed: z.number(),
   satisfyingTotalFrames: z.number(),
   durationInFrames: z.number(),
+  fps: z.number(),
 });
 
 type SentenceSequencesProps = z.infer<typeof SentenceSequencesSchema>;
@@ -26,11 +27,11 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
   audioFiles,
   seed,
   satisfyingTotalFrames,
-  durationInFrames
+  durationInFrames,
+  fps
 }) => {
   let cumulativeFramesTrippy = 0;
   let cumulativeFrames = 0;
-  const FPS = 30;
 
   const maxStartFrame = Math.max(0, satisfyingTotalFrames - durationInFrames);
   const randomStartFrame = Math.floor(random(seed) * maxStartFrame);
@@ -99,7 +100,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
             durationInFrames={file.durationInFrames}
           >
             <Persona stance={file.sentence.stance} seed={seed + index} />
-            <AudioSegmentContent file={file} fps={FPS} />
+            <AudioSegmentContent file={file} fps={fps} />
           </Sequence>
         );
       })}

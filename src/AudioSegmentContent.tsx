@@ -53,7 +53,7 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
               style={{
                 fontSize: "90px",
                 fontWeight: "900",
-                margin: "10px 15px",
+                padding: "10px 15px",
                 color: isActive ? "#FFD700" : "white",
                 transform: isActive ? "scale(1.1)" : "scale(1)",
                 transition: "transform 0.05s ease-out",
@@ -62,7 +62,9 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
                 textShadow: "5px 5px 20px rgba(0,0,0,0.8)",
                 textTransform: "uppercase",
                 // Performance tip: will-change helps with smooth scaling in Remotion
-                willChange: "transform"
+                willChange: "transform",
+                background: isActive ? 'red' : 'unset',
+                borderRadius: '15px'
               }}
             >
               {item.text}

@@ -5,7 +5,7 @@ import { SentenceSequences, SentenceSequencesSchema } from "./SentenceSequences"
 import {SentenceManifest} from "./types/sentenceManifest";
 import {ConfigManifest} from "./types/configManifest";
 
-const FPS = 30;
+const FPS = 60;
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -17,6 +17,7 @@ export const RemotionRoot: React.FC = () => {
           seed: 0,
           satisfyingTotalFrames: 0,
           durationInFrames: 1,
+          fps: FPS,
           audioFiles: [] as {
             sentence: SentenceManifest,
             audioPath: string,
@@ -80,7 +81,8 @@ export const RemotionRoot: React.FC = () => {
                 seed: config.seed,
                 satisfyingTotalFrames,
                 audioFiles,
-                durationInFrames
+                durationInFrames,
+                fps: FPS
               },
             };
           } catch (err) {
