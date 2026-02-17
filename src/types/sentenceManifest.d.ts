@@ -4,7 +4,10 @@ export type WordAlignment = {
   end: number;
 }
 
-export interface SentenceManifest {
+export type ScriptSentence = {
+  personaId?: string;
+  posXRange: number,
+  posXOffset: number;
   sentence: string;
   stance: string;
   illustration: string;

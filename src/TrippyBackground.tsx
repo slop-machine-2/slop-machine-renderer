@@ -20,7 +20,7 @@ export const TrippyBackground: React.FC<{ children?: React.ReactNode }> = ({ chi
     overflow: 'hidden',
     // The "Background" - using a multi-stop gradient
     background: `linear-gradient(${rotation}deg, #ff00c1, #9400ff, #00fff0, #ff00c1)`,
-    backgroundSize: '400% 400%',
+    // backgroundSize: '400% 400%',
   };
 
   const blurOverlayStyle: React.CSSProperties = {

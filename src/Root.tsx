@@ -2,7 +2,7 @@ import "./index.css";
 import { Composition, staticFile } from "remotion";
 import {parseMedia} from '@remotion/media-parser';
 import { SentenceSequences, SentenceSequencesSchema } from "./SentenceSequences";
-import {SentenceManifest} from "./types/sentenceManifest";
+import {ScriptSentence} from "./types/sentenceManifest";
 import {OutputConfig} from "./types/configManifest";
 
 export const RemotionRoot: React.FC = () => {
@@ -16,27 +16,24 @@ export const RemotionRoot: React.FC = () => {
           config: {
             seed: 0,
             video: {
-              fps: 1
+              fps: 1,
+              width: 720,
+              height: 1280,
             },
-            persona: {
-              personaName: '',
+            personae: {
+              prompt: '',
               theme: '',
               themeVolume: 0,
-              language: 'en-US',
-              promptPersonality: '',
-              promptVideoMeta: '',
-              stances: [],
-              elevenLabsVoiceId: '',
-              kokoroVoiceId: ''
+              personae: []
             },
             sentences: [],
             topic: {},
             satisfyingVideo: ''
           },
-          satisfyingTotalFrames: 0,
+          satisfyingTotalFrames: 1,
           durationInFrames: 1,
           audioFiles: [] as {
-            sentence: SentenceManifest,
+            sentence: ScriptSentence,
             audioPath: string,
             illustrationPath: string,
             durationInFrames: number,
@@ -44,8 +41,10 @@ export const RemotionRoot: React.FC = () => {
         }}
         component={SentenceSequences}
         schema={SentenceSequencesSchema}
-        width={1080}
-        height={1920}
+        // width={720}
+        // height={1280}
+        // width={1080}
+        // height={1920}
         calculateMetadata={async () => {
           try {
             // 1. Fetch the manifest file first
@@ -94,6 +93,8 @@ export const RemotionRoot: React.FC = () => {
             return {
               durationInFrames,
               fps: config.video.fps,
+              width: config.video.width,
+              height: config.video.height,
               props: {
                 config,
                 satisfyingTotalFrames,

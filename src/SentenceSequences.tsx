@@ -1,13 +1,13 @@
-import {Html5Audio, Html5Video, random, Sequence, staticFile} from "remotion";
+import {Html5Audio, Loop, OffthreadVideo, random, Sequence, staticFile} from "remotion";
 import { z } from "zod";
 import {AudioSegmentContent} from "./AudioSegmentContent";
 import {Persona} from "./Persona";
 import {TrippyBackground} from "./TrippyBackground";
-import {SentenceManifest} from "./types/sentenceManifest";
+import {ScriptSentence} from "./types/sentenceManifest";
 import {OutputConfig} from "./types/configManifest";
 
 export const SentenceSequenceSchema = z.object({
-  sentence: z.custom<SentenceManifest>(),
+  sentence: z.custom<ScriptSentence>(),
   audioPath: z.string(),
   illustrationPath: z.string(),
   durationInFrames: z.number().min(1),
@@ -47,16 +47,17 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
           height: '40%'
         }}
       >
-        <Html5Video
-          src={staticFile("satisfying.webm")}
-          style={{ width: '100%', height: '101%', objectFit: 'cover' }}
-          startFrom={randomStartFrame}
-          muted
-          loop
-        />
+        <Loop durationInFrames={satisfyingTotalFrames}>
+          <OffthreadVideo
+            src={staticFile("satisfying.webm")}
+            style={{ width: '100%', height: '101%', objectFit: 'cover' }}
+            trimBefore={randomStartFrame}
+            muted
+          />
+        </Loop>
       </div>
 
-      <Html5Audio src={staticFile("theme.ogg")} volume={config.persona.themeVolume} loop />
+      <Html5Audio src={staticFile("theme.ogg")} volume={config.personae.themeVolume} loop />
 
       {/* 2. Dynamic Content Layer (Background + Persona + Audio) */}
       {/* The Dynamic Background for this specific segment */}
@@ -72,7 +73,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
                 from={startFrame}
                 durationInFrames={file.durationInFrames}
               >
-                <Html5Video
+                <OffthreadVideo
                   src={file.illustrationPath}
                   style={{
                     width: '100%',
@@ -90,6 +91,11 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
 
       {audioFiles.map((file, index) => {
         const startFrame = cumulativeFrames;
+        const persona = config.personae.personae.find(p => p.id === file.sentence.personaId);
+        if (!persona) {
+          throw new Error('Persona not found!!')
+        }
+
         cumulativeFrames += file.durationInFrames;
 
         return (
@@ -98,7 +104,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
             from={startFrame}
             durationInFrames={file.durationInFrames}
           >
-            <Persona stance={file.sentence.stance} seed={config.seed + index} />
+            <Persona sentence={file.sentence} seed={config.seed + index} persona={persona} />
             <AudioSegmentContent file={file} fps={config.video.fps} />
           </Sequence>
         );

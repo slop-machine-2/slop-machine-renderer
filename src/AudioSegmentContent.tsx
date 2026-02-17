@@ -1,9 +1,11 @@
-import { Html5Audio, useCurrentFrame, AbsoluteFill } from "remotion";
+import {Html5Audio, useCurrentFrame, AbsoluteFill, useVideoConfig} from "remotion";
 import {WordAlignment} from "./types/sentenceManifest";
 import {SentenceSequenceProps} from "./SentenceSequences";
 
 export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: number }> = ({ file, fps }) => {
   const frame = useCurrentFrame();
+  const { width } = useVideoConfig();
+  const scale = width / 1920;
   const currentTime = frame / fps;
 
   // 1. Group subtitles into "pages" (e.g., 7 words per page)
@@ -25,35 +27,32 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
   const currentPage = pages[activePageIndex];
 
   return (
-    <AbsoluteFill style={{
-      justifyContent: "flex-end",
-      alignItems: "center",
-      paddingBottom: "200px",
-      backgroundColor: "transparent"
-    }}>
+    <AbsoluteFill style={{justifyContent: "flex-end"}}>
       <Html5Audio src={file.audioPath} />
 
       <div style={{
         display: 'flex',
+        alignSelf: 'center',
         flexWrap: 'wrap',
         justifyContent: 'center',
-        padding: '0 40px',
-        width: '100%',
-        maxWidth: '1000px',
-        minHeight: '250px', // Matches your font size to prevent layout jumps
+        paddingBottom: 10 * scale,
+        width: '92%',
+        minHeight: '40%',
         alignContent: 'center'
       }}>
         {currentPage.map((item: WordAlignment, i: number) => {
-          // Check if word is active (with a small buffer or simple >=)
           const isActive = currentTime >= item.start && currentTime <= item.end;
 
           return (
             <span
               key={`${item.start}-${i}`}
               style={{
-                fontSize: "90px",
+                fontSize: 150 * scale,
+                // fontSize: '400%',
                 fontWeight: "900",
-                padding: "10px 15px",
+                // padding: "10px 15px",
+                paddingRight: 30 * scale,
+                paddingLeft: 30 * scale,
                 color: isActive ? "#FFD700" : "white",
                 transform: isActive ? "scale(1.1)" : "scale(1)",
                 transition: "transform 0.05s ease-out",
@@ -64,7 +63,7 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
                 // Performance tip: will-change helps with smooth scaling in Remotion
                 willChange: "transform",
                 background: isActive ? 'red' : 'unset',
-                borderRadius: '15px'
+                borderRadius: 30 * scale
               }}
             >
               {item.text}

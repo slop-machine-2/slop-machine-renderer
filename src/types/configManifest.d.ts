@@ -1,6 +1,8 @@
-import {SentenceManifest} from "./sentenceManifest";
+import {ScriptSentence} from "./sentenceManifest";
 
 export type PersonaConfig = {
+  id: string;
+  size: number;
   personaName: string;
   theme: string;
   themeVolume: number;
@@ -12,13 +14,22 @@ export type PersonaConfig = {
   kokoroVoiceId: string;
 };
 
+export type PersonaGroupConfig = {
+  prompt: string;
+  theme: string;
+  themeVolume: number;
+  personae: PersonaConfig[];
+}
+
 export type OutputConfig = {
   seed: number;
   video: {
     fps: number;
+    width: number;
+    height: number;
   };
-  persona: PersonaConfig;
-  sentences: SentenceManifest[];
+  personae: PersonaGroupConfig;
+  sentences: ScriptSentence[];
   topic: object;
   satisfyingVideo: string;
 };

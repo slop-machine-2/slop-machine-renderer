@@ -1,10 +1,11 @@
 import {Img, staticFile, useCurrentFrame, spring, useVideoConfig, interpolate, random} from "remotion";
+import {ScriptSentence} from "./types/sentenceManifest";
+import {PersonaConfig} from "./types/configManifest";
 
-const PERSONA_WIDTH = 700;
-
-export const Persona: React.FC<{ stance: string; seed: number }> = ({ stance, seed }) => {
+export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona: PersonaConfig }> = ({ sentence, seed, persona }) => {
   const frame = useCurrentFrame();
   const { fps, height, width } = useVideoConfig();
+  const ratio = width / 1920;
 
   const entrance = spring({
     frame,
@@ -18,9 +19,9 @@ export const Persona: React.FC<{ stance: string; seed: number }> = ({ stance, se
   // Maps the spring's 0-1 movement to your desired 0.8-1.0 size range
   const scale = interpolate(entrance, [0, 1], [0.8, 1]);
 
-  const minY = height * 0.1;
+  const minY = height * 0.2;
   const maxY = height * 0.4;
-  const randomX = Math.floor(random(seed + "x") * (width * 0.6) + (width * 0.2));
+  const randomX = Math.floor(random(seed + "x") * (width * sentence.posXRange) + (width * sentence.posXOffset));
   const randomY = Math.floor(random(seed + "y") * (maxY - minY) + minY);
 
   return (
@@ -29,12 +30,12 @@ export const Persona: React.FC<{ stance: string; seed: number }> = ({ stance, se
       left: randomX,
       top: randomY,
       transform: `translate(-50%, -50%) scaleY(${scale * 1.05})`,
-      width: PERSONA_WIDTH
+      width: persona.size * ratio
     }}>
       <Img
-        src={staticFile(`persona/${stance}.png`)}
+        src={staticFile(`persona/${sentence.personaId}/${sentence.stance}.png`)}
         style={{
-          width: PERSONA_WIDTH,
+          width: '100%',
           height: 'auto'
         }}
       />

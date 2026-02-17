@@ -8,14 +8,16 @@ import {unlink} from "node:fs/promises";
 
 type VideoRenderingJobData = {
   folderPath: string;
-  outputName: string;
-  config: Record<string, any>;
+  fake: boolean;
+  showProgress: boolean;
 }
 
 const execPromise = promisify(exec);
 
 const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobData>) => {
   const folderPath = job.data.folderPath;
+  const fake = job.data.fake;
+  const showProgress = job.data.showProgress;
   // const outputName = job.data.outputName;
   // const config = job.data.config;
 
@@ -42,16 +44,53 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
       // inputProps: config,
     });
 
+    if (fake) {
+      console.log('Fake message.. aborting');
+      return;
+    }
+
     // 3. Render to the shared volume
     const tempPath = `/tmp/render-${Date.now()}.mp4`;
-    await renderMedia({
-      composition,
-      concurrency: 1,
-      serveUrl: bundleLocation,
-      codec: "h264",
-      outputLocation: tempPath,
-      // inputProps: config,
-    });
+    if (showProgress) {
+      const formatETA = (ms: number | null) => {
+        if (ms === null) return "Calculating...";
+
+        const seconds = Math.floor((ms / 1000) % 60);
+        const minutes = Math.floor((ms / (1000 * 60)) % 60);
+        const hours = Math.floor(ms / (1000 * 60 * 60));
+
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+        parts.push(`${seconds}s`);
+
+        return parts.join(" ");
+      };
+
+      await renderMedia({
+        composition,
+        concurrency: 8,
+        serveUrl: bundleLocation,
+        codec: "h264",
+        outputLocation: tempPath,
+        onProgress({ progress, renderEstimatedTime, renderedFrames }) {
+          const now = new Date();
+          const prefix = `[${now.getMinutes()}:${now.getSeconds()}]`;
+          console.log(`${prefix} | ${Math.round(progress * 100)}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
+        }
+      });
+    }
+    else {
+      await renderMedia({
+        composition,
+        concurrency: 1,
+        serveUrl: bundleLocation,
+        codec: "h264",
+        outputLocation: tempPath,
+        hardwareAcceleration: "required"
+        // inputProps: config,
+      });
+    }
 
     try {
       const tempFile = Bun.file(tempPath);
