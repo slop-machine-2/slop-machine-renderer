@@ -69,7 +69,7 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
 
       await renderMedia({
         composition,
-        concurrency: 8,
+        concurrency: +(process.env.REMOTION_CONCURRENCY ?? 4),
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: tempPath,
@@ -83,7 +83,7 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
     else {
       await renderMedia({
         composition,
-        concurrency: 1,
+        concurrency: +(process.env.REMOTION_CONCURRENCY ?? 4),
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: tempPath,
