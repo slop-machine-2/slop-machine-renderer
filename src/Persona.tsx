@@ -19,8 +19,8 @@ export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona
   // Maps the spring's 0-1 movement to your desired 0.8-1.0 size range
   const scale = interpolate(entrance, [0, 1], [0.8, 1]);
 
-  const minY = height * 0.2;
-  const maxY = height * 0.4;
+  const minY = height * 0.03;
+  const maxY = height * 0.1;
   const randomX = Math.floor(random(seed + "x") * (width * sentence.posXRange) + (width * sentence.posXOffset));
   const randomY = Math.floor(random(seed + "y") * (maxY - minY) + minY);
 
@@ -29,7 +29,7 @@ export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona
       position: 'absolute',
       left: randomX,
       top: randomY,
-      transform: `translate(-50%, -50%) scaleY(${scale * 1.05})`,
+      transform: `translate(-50%) scaleY(${scale * 1.05})`,
       width: persona.size * ratio
     }}>
       <Img
