@@ -12,6 +12,8 @@ export const RemotionRoot: React.FC = () => {
         id="DynamicShortVideo"
         durationInFrames={1}
         fps={1}
+        width={1}
+        height={1}
         defaultProps={{
           config: {
             seed: 0,
@@ -41,10 +43,6 @@ export const RemotionRoot: React.FC = () => {
         }}
         component={SentenceSequences}
         schema={SentenceSequencesSchema}
-        // width={720}
-        // height={1280}
-        // width={1080}
-        // height={1920}
         calculateMetadata={async () => {
           try {
             // 1. Fetch the manifest file first

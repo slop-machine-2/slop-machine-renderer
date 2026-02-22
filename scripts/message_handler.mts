@@ -87,7 +87,7 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: tempPath,
-        hardwareAcceleration: "required"
+        // hardwareAcceleration: "required"
         // inputProps: config,
       });
     }
