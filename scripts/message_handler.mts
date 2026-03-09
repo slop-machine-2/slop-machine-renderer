@@ -7,29 +7,29 @@ import path from "path";
 import {unlink} from "node:fs/promises";
 
 type VideoRenderingJobData = {
-  folderPath: string;
+  renderId: string;
   fake: boolean;
   showProgress: boolean;
 }
 
 const execPromise = promisify(exec);
 
-const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobData>) => {
-  const folderPath = job.data.folderPath;
+const worker = new Worker('render-service-queue', async (job: Job<VideoRenderingJobData>) => {
+  const renderId = job.data.renderId;
   const fake = job.data.fake;
   const showProgress = job.data.showProgress;
   // const outputName = job.data.outputName;
   // const config = job.data.config;
 
-  console.log(`Starting asset sync for: ${folderPath}`);
+  console.log(`Starting asset sync for: ${renderId}`);
 
   try {
     // 0. Run the asset copy script before rendering
-    const { stdout, stderr } = await execPromise(`bun run copy-assets "${folderPath}"`);
+    const { stdout, stderr } = await execPromise(`bun run copy-assets "${renderId}"`);
     console.log('Sync Output:', stdout);
     if (stderr) console.warn('Sync Warning:', stderr);
 
-    console.log(`Starting render for: ${folderPath}`);
+    console.log(`Starting render for: ${renderId}`);
 
     const compositionId = "DynamicShortVideo";
     const entry = "./src/index.ts";
@@ -94,12 +94,13 @@ const worker = new Worker('video-rendering', async (job: Job<VideoRenderingJobDa
 
     try {
       const tempFile = Bun.file(tempPath);
-      await Bun.s3.write(`${folderPath}/render.mp4`, tempFile);
+      await Bun.s3.write(`output/${renderId}/render.mp4`, tempFile);
     } finally {
       await unlink(tempPath);
     }
 
     console.log("Render finished!");
+    // return {}; // We could return data needed by post
   } catch (error) {
     console.error("Failed during asset sync or render:", error);
     throw error; // Ensure the job is marked as failed in Valkey/BullMQ

@@ -25,10 +25,14 @@ async function copyAssets() {
   const destinationPath = join('/app', 'public');
 
   // Check if a specific path was provided as a CLI argument
-  const manualPath = argv[2];
+  let manualPath = argv[2];
 
   if (!manualPath) {
     throw new Error('No path given');
+  }
+
+  if (!manualPath.startsWith('output/')) {
+    manualPath = 'output/' + manualPath;
   }
 
   console.log(`🎯 Using manually specified path: ${manualPath}`);
