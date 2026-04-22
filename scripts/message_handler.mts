@@ -106,7 +106,7 @@ const worker = new Worker('render-service-queue', async (job: Job<VideoRendering
     throw error; // Ensure the job is marked as failed in Valkey/BullMQ
   }
 }, {
-  connection: { host: 'valkey', port: 6379 },
+  connection: { host: process.env.QUEUE_HOST || 'valkey', port: 6379 },
   concurrency: 1
 });
 
