@@ -38,5 +38,6 @@ RUN bunx remotion browser ensure
 
 # Copy the rest of the source code
 COPY --chown=bun:bun src ./src
+COPY --chown=bun:bun scripts ./scripts
 
 CMD ["bunx", "remotion", "preview"]
