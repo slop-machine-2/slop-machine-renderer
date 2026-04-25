@@ -61,7 +61,7 @@ async function copyAssets() {
 
     // 6. Copy the theme audio
     const theme = configData.personae.theme;
-    const audioSource = `audio/themes/${theme}.ogg`;
+    const audioSource = `assets/themes/${theme}.ogg`;
     const audioDest = join(destinationPath, 'theme.ogg');
     console.log(`🎵 Copying theme: ${theme}.ogg...`);
     const s3file = Bun.s3.file(audioSource);
