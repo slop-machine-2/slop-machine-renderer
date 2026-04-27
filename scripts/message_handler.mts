@@ -1,8 +1,8 @@
-import { promisify } from 'node:util';
-import { exec } from 'node:child_process';
+import {promisify} from 'node:util';
+import {exec} from 'node:child_process';
 import {Job, Worker} from 'bullmq';
-import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
+import {bundle} from "@remotion/bundler";
+import {renderMedia, selectComposition} from "@remotion/renderer";
 import path from "path";
 import {unlink} from "node:fs/promises";
 
@@ -14,18 +14,24 @@ type VideoRenderingJobData = {
 
 const execPromise = promisify(exec);
 
-const worker = new Worker('render-service-queue', async (job: Job<VideoRenderingJobData>) => {
-  const renderId = job.data.renderId;
-  const fake = job.data.fake;
-  const showProgress = job.data.showProgress;
-  // const outputName = job.data.outputName;
-  // const config = job.data.config;
+const worker = new Worker('render-pipeline', async (job: Job<VideoRenderingJobData>) => {
+  if (job.name !== 'render-video') {
+    throw new Error('Unknown job name: ' + job.name);
+  }
+
+  const childrenValues = await job.getChildrenValues();
+  const values: VideoRenderingJobData = Object.values(childrenValues)[0];
+  console.log('values', values);
+
+  const renderId = values.renderId;
+  const fake = values.fake;
+  const showProgress = values.showProgress;
 
   console.log(`Starting asset sync for: ${renderId}`);
 
   try {
     // 0. Run the asset copy script before rendering
-    const { stdout, stderr } = await execPromise(`bun run copy-assets "${renderId}"`);
+    const {stdout, stderr} = await execPromise(`bun run copy-assets "${renderId}"`);
     console.log('Sync Output:', stdout);
     if (stderr) console.warn('Sync Warning:', stderr);
 
@@ -73,14 +79,13 @@ const worker = new Worker('render-service-queue', async (job: Job<VideoRendering
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: tempPath,
-        onProgress({ progress, renderEstimatedTime, renderedFrames }) {
+        onProgress({progress, renderEstimatedTime, renderedFrames}) {
           const now = new Date();
           const prefix = `[${now.getMinutes()}:${now.getSeconds()}]`;
           console.log(`${prefix} | ${Math.round(progress * 100)}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
         }
       });
-    }
-    else {
+    } else {
       await renderMedia({
         composition,
         concurrency: +(process.env.REMOTION_CONCURRENCY ?? 4),
@@ -100,13 +105,13 @@ const worker = new Worker('render-service-queue', async (job: Job<VideoRendering
     }
 
     console.log("Render finished!");
-    // return {}; // We could return data needed by post
   } catch (error) {
     console.error("Failed during asset sync or render:", error);
     throw error; // Ensure the job is marked as failed in Valkey/BullMQ
   }
+  return {renderId};
 }, {
-  connection: { host: process.env.QUEUE_HOST || 'valkey', port: 6379 },
+  connection: {host: process.env.QUEUE_HOST || 'valkey', port: 6379},
   concurrency: 1
 });
 
