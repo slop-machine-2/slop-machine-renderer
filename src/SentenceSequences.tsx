@@ -64,6 +64,10 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
       <div style={{ height: '60%', width: '100%', position: 'absolute', top: 0 }}>
         <TrippyBackground>
           {audioFiles.map((file, index) => {
+            const isLast = index === audioFiles.length - 1;
+            const adjustedDuration = isLast
+              ? file.durationInFrames + Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000))
+              : file.durationInFrames;
             const startFrame = cumulativeFramesTrippy;
             cumulativeFramesTrippy += file.durationInFrames;
 
@@ -71,7 +75,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
               <Sequence
                 key={index + 'trippy'}
                 from={startFrame}
-                durationInFrames={file.durationInFrames}
+                durationInFrames={adjustedDuration}
               >
                 <OffthreadVideo
                   src={file.illustrationPath}
@@ -90,6 +94,11 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
 
 
       {audioFiles.map((file, index) => {
+        const isLast = index === audioFiles.length - 1;
+        const adjustedDuration = isLast
+          ? file.durationInFrames + Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000))
+          : file.durationInFrames;
+
         const startFrame = cumulativeFrames;
         const persona = config.personae.personae.find(p => p.id === file.sentence.personaId);
         if (!persona) {
@@ -102,7 +111,7 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
           <Sequence
             key={index}
             from={startFrame}
-            durationInFrames={file.durationInFrames}
+            durationInFrames={adjustedDuration}
           >
             <Persona sentence={file.sentence} seed={config.seed + index} persona={persona} />
             <AudioSegmentContent file={file} fps={config.video.fps} />

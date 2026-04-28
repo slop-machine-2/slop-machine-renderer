@@ -15,6 +15,7 @@ export type PersonaConfig = {
 };
 
 export type PersonaGroupConfig = {
+  endPaddingDurationMs: number;
   prompt: string;
   theme: string;
   themeVolume: number;

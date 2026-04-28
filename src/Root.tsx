@@ -23,6 +23,7 @@ export const RemotionRoot: React.FC = () => {
               height: 1280,
             },
             personae: {
+              endPaddingDurationMs: 0,
               prompt: '',
               theme: '',
               themeVolume: 0,
@@ -86,7 +87,8 @@ export const RemotionRoot: React.FC = () => {
             });
 
             const satisfyingTotalFrames = Math.floor(satisfyingVideoData.durationInSeconds! * config.video.fps);
-            const durationInFrames = Math.max(1, totalFrames);
+            const endPaddingFrames = Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000));
+            const durationInFrames = Math.max(1, totalFrames + endPaddingFrames);
 
             return {
               durationInFrames,
