@@ -1,8 +1,10 @@
-import {Img, staticFile, useCurrentFrame, spring, useVideoConfig, interpolate, random} from "remotion";
-import {ScriptSentence} from "./types/sentenceManifest";
+import {Img, useCurrentFrame, spring, useVideoConfig, interpolate, random} from "remotion";
 import {PersonaConfig} from "./types/configManifest";
+import {SentenceSequenceProps} from "./SentenceSequences";
 
-export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona: PersonaConfig }> = ({ sentence, seed, persona }) => {
+export const Persona: React.FC<{ processedSentenceAudio: SentenceSequenceProps; seed: number; persona: PersonaConfig }> = ({ processedSentenceAudio, seed, persona }) => {
+  const scriptSentence = processedSentenceAudio.sentence;
+
   const frame = useCurrentFrame();
   const { fps, height, width } = useVideoConfig();
   const ratio = width / 1920;
@@ -21,7 +23,7 @@ export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona
 
   const minY = height * 0.03;
   const maxY = height * 0.1;
-  const randomX = Math.floor(random(seed + "x") * (width * sentence.posXRange) + (width * sentence.posXOffset));
+  const randomX = Math.floor(random(seed + "x") * (width * scriptSentence.posXRange) + (width * scriptSentence.posXOffset));
   const randomY = Math.floor(random(seed + "y") * (maxY - minY) + minY);
 
   return (
@@ -33,7 +35,7 @@ export const Persona: React.FC<{ sentence: ScriptSentence; seed: number; persona
       width: persona.size * ratio
     }}>
       <Img
-        src={staticFile(`persona/${sentence.personaId}/${sentence.stance}.png`)}
+        src={processedSentenceAudio.personaStancePath}
         style={{
           width: '100%',
           height: 'auto'

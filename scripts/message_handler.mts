@@ -1,10 +1,9 @@
-import {promisify} from 'node:util';
-import {exec} from 'node:child_process';
 import {Job, Worker} from 'bullmq';
 import {bundle} from "@remotion/bundler";
 import {renderMedia, selectComposition} from "@remotion/renderer";
 import path from "path";
 import {unlink} from "node:fs/promises";
+import {OutputConfig} from "../src/types/configManifest";
 
 type VideoRenderingJobData = {
   renderId: string;
@@ -12,52 +11,52 @@ type VideoRenderingJobData = {
   showProgress: boolean;
 }
 
-const execPromise = promisify(exec);
-
-const worker = new Worker('render-pipeline', async (job: Job<VideoRenderingJobData>) => {
-  if (job.name !== 'render-video') {
-    throw new Error('Unknown job name: ' + job.name);
+async function startWorker() {
+  const s3Endpoint = process.env.S3_HTTP_HOST;
+  if (!s3Endpoint) {
+    throw new Error('No S3 HTTP Gateway set');
   }
 
-  const childrenValues = await job.getChildrenValues();
-  const values: VideoRenderingJobData = Object.values(childrenValues)[0];
-  console.log('values', values);
+  const entry = "./src/index.ts";
+  let bundleLocation = await bundle(path.resolve(entry));
+  const worker = new Worker('render-pipeline', async (job: Job<VideoRenderingJobData>) => {
+    if (job.name !== 'render-video') {
+      throw new Error('Unknown job name: ' + job.name);
+    }
 
-  const renderId = values.renderId;
-  const fake = values.fake;
-  const showProgress = values.showProgress;
+    const childrenValues = await job.getChildrenValues();
+    const values: VideoRenderingJobData = Object.values(childrenValues)[0];
+    console.log('values', values);
 
-  console.log(`Starting asset sync for: ${renderId}`);
-
-  try {
-    // 0. Run the asset copy script before rendering
-    const {stdout, stderr} = await execPromise(`bun run copy-assets "${renderId}"`);
-    console.log('Sync Output:', stdout);
-    if (stderr) console.warn('Sync Warning:', stderr);
-
-    console.log(`Starting render for: ${renderId}`);
-
-    const compositionId = "DynamicShortVideo";
-    const entry = "./src/index.ts";
-
-    // 1. Bundle the project
-    const bundleLocation = await bundle(path.resolve(entry));
-
-    // 2. Select the composition
-    const composition = await selectComposition({
-      serveUrl: bundleLocation,
-      id: compositionId,
-      // inputProps: config,
-    });
+    const renderId = values.renderId;
+    const fake = values.fake;
+    const showProgress = values.showProgress;
 
     if (fake) {
       console.log('Fake message.. aborting');
       return;
     }
 
-    // 3. Render to the shared volume
-    const tempPath = `/tmp/render-${Date.now()}.mp4`;
-    if (showProgress) {
+    console.log(`Starting processing for: ${renderId}`);
+
+    try {
+      const s3config = Bun.s3.file(`output/${renderId}/config.json`);
+      const config: OutputConfig = await s3config.json();
+      const inputProps = {
+        config,
+        renderId,
+        s3Endpoint,
+      }
+
+      console.log(`Starting render for: ${renderId}`);
+
+      const compositionId = "DynamicShortVideo";
+      const composition = await selectComposition({
+        serveUrl: bundleLocation,
+        id: compositionId,
+        inputProps,
+      });
+
       const formatETA = (ms: number | null) => {
         if (ms === null) return "Calculating...";
 
@@ -73,19 +72,8 @@ const worker = new Worker('render-pipeline', async (job: Job<VideoRenderingJobDa
         return parts.join(" ");
       };
 
-      await renderMedia({
-        composition,
-        concurrency: +(process.env.REMOTION_CONCURRENCY ?? 4),
-        serveUrl: bundleLocation,
-        codec: "h264",
-        outputLocation: tempPath,
-        onProgress({progress, renderEstimatedTime, renderedFrames}) {
-          const now = new Date();
-          const prefix = `[${now.getMinutes()}:${now.getSeconds()}]`;
-          console.log(`${prefix} | ${Math.round(progress * 100)}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
-        }
-      });
-    } else {
+      const tempPath = `/tmp/render-${renderId}-${Date.now()}.mp4`;
+      let lastReportedPercentage = 0;
       await renderMedia({
         composition,
         concurrency: +(process.env.REMOTION_CONCURRENCY ?? 4),
@@ -93,36 +81,54 @@ const worker = new Worker('render-pipeline', async (job: Job<VideoRenderingJobDa
         codec: "h264",
         outputLocation: tempPath,
         // hardwareAcceleration: "required"
-        // inputProps: config,
+        inputProps,
+        onProgress: async ({progress, renderEstimatedTime, renderedFrames}) => {
+          if (showProgress) {
+            const now = new Date();
+            const prefix = `[${now.getMinutes()}:${now.getSeconds()}]`;
+            console.log(`${prefix} | ${Math.round(progress * 100)}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
+          }
+
+          const percentage = Math.round(progress * 100);
+          if (percentage > lastReportedPercentage) {
+            await job.updateProgress(percentage);
+            lastReportedPercentage = percentage;
+          }
+        }
       });
+
+      try {
+        const tempFile = Bun.file(tempPath);
+        await Bun.s3.write(`output/${renderId}/render.mp4`, tempFile);
+      } finally {
+        await unlink(tempPath);
+      }
+
+      console.log("Render finished!");
+    } catch (error) {
+      console.error("Failed during asset sync or render:", error);
+      throw error; // Ensure the job is marked as failed in Valkey/BullMQ
     }
 
-    try {
-      const tempFile = Bun.file(tempPath);
-      await Bun.s3.write(`output/${renderId}/render.mp4`, tempFile);
-    } finally {
-      await unlink(tempPath);
-    }
 
-    console.log("Render finished!");
-  } catch (error) {
-    console.error("Failed during asset sync or render:", error);
-    throw error; // Ensure the job is marked as failed in Valkey/BullMQ
-  }
-  return {renderId};
-}, {
-  connection: {host: process.env.QUEUE_HOST || 'valkey', port: 6379},
-  concurrency: 1
-});
+    return {renderId};
+  }, {
+    connection: {host: process.env.QUEUE_HOST || 'valkey', port: 6379},
+    concurrency: 1
+  });
 
-worker.on('completed', (job) => {
-  console.log(`✅ Job ${job.id} completed!`);
-});
+  worker.on('completed', (job) => {
+    console.log(`✅ Job ${job.id} completed!`);
+  });
 
-worker.on('failed', (job, err) => {
-  console.error(`❌ Job ${job?.id} failed with error: ${err.message}`);
-});
+  worker.on('failed', (job, err) => {
+    console.error(`❌ Job ${job?.id} failed with error: ${err.message}`);
+  });
 
-worker.on('error', err => {
-  console.error('Worker connection error:', err);
-});
+  worker.on('error', err => {
+    console.error('Worker connection error:', err);
+  });
+}
+
+// @ts-ignore
+await startWorker();

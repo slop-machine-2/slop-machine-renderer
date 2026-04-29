@@ -1,9 +1,10 @@
 import "./index.css";
-import { Composition, staticFile } from "remotion";
+import { Composition } from "remotion";
 import {parseMedia} from '@remotion/media-parser';
 import { SentenceSequences, SentenceSequencesSchema } from "./SentenceSequences";
 import {ScriptSentence} from "./types/sentenceManifest";
 import {OutputConfig} from "./types/configManifest";
+
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -35,60 +36,59 @@ export const RemotionRoot: React.FC = () => {
           },
           satisfyingTotalFrames: 1,
           durationInFrames: 1,
-          audioFiles: [] as {
+          s3Endpoint: process.env.REMOTION_APP_S3_HTTP_HOST || '',
+          s3RootEndpoint: '',
+          renderId: '',
+          processedSentenceAudios: [] as {
             sentence: ScriptSentence,
             audioPath: string,
             illustrationPath: string,
+            personaStancePath: string,
             durationInFrames: number,
           }[],
         }}
         component={SentenceSequences}
         schema={SentenceSequencesSchema}
-        calculateMetadata={async () => {
+        calculateMetadata={async ({ props }) => {
           try {
-            // 1. Fetch the manifest file first
-            const manifestResponse = await fetch(staticFile("config.json"));
-            if (!manifestResponse.ok) {
-              throw new Error("Could not load config.json");
+            let config: OutputConfig = props.config;
+            const renderId = props.renderId || '';
+            const s3RootEndpoint = `http://${props.s3Endpoint}`;
+            const s3Endpoint = `${s3RootEndpoint}/output/${renderId}`;
+
+            if (props.renderId && process.env.NODE_ENV === 'development') {
+              const s3config = await fetch(`${s3Endpoint}/config.json`);
+              config = await s3config.json();
             }
 
-            const config: OutputConfig = await manifestResponse.json();
-            const sentences = config.sentences;
+            const processedSentenceAudios = config.sentences.map((sentence, i) => {
+              const index = i + 1;
+              const lastWordEnd = sentence.wordsAlignment.at(-1)?.end ?? 0;
 
-            // 2. Map through the known sentences to get subs and audio
-            const audioFiles = await Promise.all(
-              sentences.map(async (sentence, i) => {
-                const index = i + 1;
-                const audioPath = staticFile(`sentence_${index}.ogg`);
-                const illustrationPath = staticFile(`sentence_${index}_illustration.mp4`);
+              return {
+                sentence,
+                audioPath: `${s3Endpoint}/sentence_${index}.ogg`,
+                illustrationPath: `${s3Endpoint}/sentence_${index}_illustration.mp4`,
+                personaStancePath: `${s3RootEndpoint}/personae/${sentence.personaId}/${sentence.stance}.png`,
+                durationInFrames: Math.ceil(lastWordEnd * config.video.fps),
+              };
+            });
 
-                // Calculate duration based on the last timestamp in the sub file
-                const lastWordEnd = sentence.wordsAlignment.length > 0 ? sentence.wordsAlignment[sentence.wordsAlignment.length - 1].end : 0;
-                const durationInFrames = Math.ceil(lastWordEnd * config.video.fps);
-
-                return {
-                  sentence,
-                  audioPath,
-                  illustrationPath,
-                  durationInFrames,
-                };
-              })
-            );
-
-            // 3. Calculate total timeline length
-            const totalFrames = audioFiles.reduce((acc, file) => acc + file.durationInFrames, 0);
+            const totalFrames = processedSentenceAudios.reduce((acc, file) => acc + file.durationInFrames, 0);
 
             const satisfyingVideoData = await parseMedia({
               acknowledgeRemotionLicense: true,
-              src: staticFile('satisfying.webm'),
+              src: `${s3Endpoint}/satisfying.webm`,
               fields: {
                 durationInSeconds: true,
               },
             });
 
             const satisfyingTotalFrames = Math.floor(satisfyingVideoData.durationInSeconds! * config.video.fps);
-            const endPaddingFrames = Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000));
+            const endPaddingFrames = Math.ceil(config.video.fps * ((config.personae.endPaddingDurationMs || 0) / 1000));
             const durationInFrames = Math.max(1, totalFrames + endPaddingFrames);
+
+            console.log({totalFrames, durationInFrames})
 
             return {
               durationInFrames,
@@ -98,8 +98,11 @@ export const RemotionRoot: React.FC = () => {
               props: {
                 config,
                 satisfyingTotalFrames,
-                audioFiles,
+                processedSentenceAudios,
                 durationInFrames,
+                renderId,
+                s3Endpoint,
+                s3RootEndpoint
               },
             };
           } catch (err) {

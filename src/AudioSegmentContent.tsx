@@ -2,7 +2,7 @@ import {Html5Audio, useCurrentFrame, AbsoluteFill, useVideoConfig} from "remotio
 import {WordAlignment} from "./types/sentenceManifest";
 import {SentenceSequenceProps} from "./SentenceSequences";
 
-export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: number }> = ({ file, fps }) => {
+export const AudioSegmentContent: React.FC<{ processedSentenceAudio: SentenceSequenceProps, fps: number }> = ({ processedSentenceAudio, fps }) => {
   const frame = useCurrentFrame();
   const { width } = useVideoConfig();
   const scale = width / 1920;
@@ -11,8 +11,8 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
   // 1. Group subtitles into "pages" (e.g., 7 words per page)
   const wordsPerPage = 7;
   const pages: WordAlignment[][] = [];
-  for (let i = 0; i < file.sentence.wordsAlignment.length; i += wordsPerPage) {
-    pages.push(file.sentence.wordsAlignment.slice(i, i + wordsPerPage));
+  for (let i = 0; i < processedSentenceAudio.sentence.wordsAlignment.length; i += wordsPerPage) {
+    pages.push(processedSentenceAudio.sentence.wordsAlignment.slice(i, i + wordsPerPage));
   }
 
   // 2. Find the correct page
@@ -28,7 +28,7 @@ export const AudioSegmentContent: React.FC<{ file: SentenceSequenceProps, fps: n
 
   return (
     <AbsoluteFill style={{justifyContent: "flex-end"}}>
-      <Html5Audio src={file.audioPath} />
+      <Html5Audio src={processedSentenceAudio.audioPath} />
 
       <div style={{
         display: 'flex',

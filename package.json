@@ -31,7 +31,6 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "copy-assets": "bun run scripts/copy_assets.mts",
     "listen-messages": "bun run scripts/message_handler.mts",
     "entrypoint-devmode": "bun run scripts/entrypoint_devmode.mts"
   },

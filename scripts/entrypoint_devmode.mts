@@ -24,11 +24,12 @@ function runCommand(command: string, args: string[], name: string): ChildProcess
 
 console.log("== Starting Dev Environment ==");
 
-// 1. Start Remotion Studio
-const studio = runCommand('bunx', ['remotionb', 'studio'], 'Remotion');
-
 // 2. Start your BullMQ listener
 const listener = runCommand('bun', ['run', 'listen-messages'], 'Worker');
+
+// 1. Start Remotion Studio
+process.env.REMOTION_APP_S3_HTTP_HOST='localhost:8081';
+const studio = runCommand('bunx', ['remotionb', 'studio'], 'Remotion');
 
 /**
  * Cleanup: Ensure child processes are killed when this script is stopped
