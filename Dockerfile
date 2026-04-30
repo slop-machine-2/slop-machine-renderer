@@ -40,4 +40,4 @@ RUN bunx remotion browser ensure
 COPY --chown=bun:bun src ./src
 COPY --chown=bun:bun scripts ./scripts
 
-CMD ["bunx", "remotion", "preview"]
+CMD ["bun", "run", "listen-messages"]

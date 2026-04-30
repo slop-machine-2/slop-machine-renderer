@@ -88,8 +88,6 @@ export const RemotionRoot: React.FC = () => {
             const endPaddingFrames = Math.ceil(config.video.fps * ((config.personae.endPaddingDurationMs || 0) / 1000));
             const durationInFrames = Math.max(1, totalFrames + endPaddingFrames);
 
-            console.log({totalFrames, durationInFrames})
-
             return {
               durationInFrames,
               fps: config.video.fps,

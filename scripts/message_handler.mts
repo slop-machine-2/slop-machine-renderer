@@ -26,11 +26,10 @@ async function startWorker() {
 
     const childrenValues = await job.getChildrenValues();
     const values: VideoRenderingJobData = Object.values(childrenValues)[0];
-    console.log('values', values);
 
-    const renderId = values.renderId;
-    const fake = values.fake;
-    const showProgress = values.showProgress;
+    const renderId = values?.renderId || job.data.renderId;
+    const fake = values?.fake || job.data.fake;
+    const showProgress = values?.showProgress || job.data.showProgress;
 
     if (fake) {
       console.log('Fake message.. aborting');
@@ -47,8 +46,6 @@ async function startWorker() {
         renderId,
         s3Endpoint,
       }
-
-      console.log(`Starting render for: ${renderId}`);
 
       const compositionId = "DynamicShortVideo";
       const composition = await selectComposition({
@@ -83,13 +80,13 @@ async function startWorker() {
         // hardwareAcceleration: "required"
         inputProps,
         onProgress: async ({progress, renderEstimatedTime, renderedFrames}) => {
+          const percentage = Math.round(progress * 100);
           if (showProgress) {
             const now = new Date();
             const prefix = `[${now.getMinutes()}:${now.getSeconds()}]`;
-            console.log(`${prefix} | ${Math.round(progress * 100)}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
+            console.log(`${prefix} | ${percentage}% | ETA: ${formatETA(renderEstimatedTime)} | Frame ${renderedFrames}`);
           }
 
-          const percentage = Math.round(progress * 100);
           if (percentage > lastReportedPercentage) {
             await job.updateProgress(percentage);
             lastReportedPercentage = percentage;
