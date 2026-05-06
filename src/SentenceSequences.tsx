@@ -2,9 +2,9 @@ import {Html5Audio, Loop, OffthreadVideo, random, Sequence} from "remotion";
 import {z} from "zod";
 import {AudioSegmentContent} from "./AudioSegmentContent";
 import {Persona} from "./Persona";
-import {TrippyBackground} from "./TrippyBackground";
 import {ScriptSentence} from "./types/sentenceManifest";
 import {OutputConfig} from "./types/configManifest";
+import {Separator} from "./Separator";
 
 export const SentenceSequenceSchema = z.object({
   sentence: z.custom<ScriptSentence>(),
@@ -49,6 +49,9 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
   return (
     <>
       {/* 1. Global Elements (Satisfying video & Theme Music) */}
+      <Html5Audio src={`${s3RootEndpoint}/assets/themes/${config.personae.theme}.ogg`}
+                  volume={config.personae.themeVolume} loop/>
+
       <div
         style={{
           position: 'absolute',
@@ -68,42 +71,38 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
         </Loop>
       </div>
 
-      <Html5Audio src={`${s3RootEndpoint}/assets/themes/${config.personae.theme}.ogg`}
-                  volume={config.personae.themeVolume} loop/>
-
       {/* 2. Dynamic Content Layer (Background + Persona + Audio) */}
       {/* The Dynamic Background for this specific segment */}
       <div style={{height: '60%', width: '100%', position: 'absolute', top: 0}}>
-        <TrippyBackground>
-          {processedSentenceAudios.map((file, index) => {
-            const isLast = index === processedSentenceAudios.length - 1;
-            const adjustedDuration = isLast
-              ? file.durationInFrames + Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000))
-              : file.durationInFrames;
-            const startFrame = cumulativeFramesTrippy;
-            cumulativeFramesTrippy += file.durationInFrames;
+        {processedSentenceAudios.map((file, index) => {
+          const isLast = index === processedSentenceAudios.length - 1;
+          const adjustedDuration = isLast
+            ? file.durationInFrames + Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000))
+            : file.durationInFrames;
+          const startFrame = cumulativeFramesTrippy;
+          cumulativeFramesTrippy += file.durationInFrames;
 
-            return (
-              <Sequence
-                key={index + 'trippy'}
-                from={startFrame}
-                durationInFrames={adjustedDuration}
-              >
-                <OffthreadVideo
-                  src={file.illustrationPath}
-                  style={{
-                    width: '100%',
-                    height: '101%',
-                    objectFit: 'cover'
-                  }}
-                  muted
-                />
-              </Sequence>
-            );
-          })}
-        </TrippyBackground>
+          return (
+            <Sequence
+              key={index + 'trippy'}
+              from={startFrame}
+              durationInFrames={adjustedDuration}
+            >
+              <OffthreadVideo
+                src={file.illustrationPath}
+                style={{
+                  width: '100%',
+                  height: '101%',
+                  objectFit: 'cover'
+                }}
+                muted
+              />
+            </Sequence>
+          );
+        })}
       </div>
 
+      <Separator/>
 
       {processedSentenceAudios.map((processedSentenceAudio, index) => {
         const isLast = index === processedSentenceAudios.length - 1;
