@@ -16,7 +16,7 @@ export const Separator: React.FC = () => {
   );
 
   // Scale the thickness and shadow based on resolution
-  const thickness = 30 * ratio;
+  const thickness = 10 * ratio;
   const shadowBlur = 10 * ratio;
   const backgroundPosition = (frame * 3) * ratio;
 
@@ -28,7 +28,7 @@ export const Separator: React.FC = () => {
         left: 0,
         right: 0,
         height: thickness,
-        transform: 'translateY(-20%)',
+        transform: 'translateY(140%)',
         background: `linear-gradient(90deg, #ff007b, #f9d423, #ff007b)`,
         backgroundSize: '200% 100%',
         backgroundPosition: `${backgroundPosition}px 0`,
