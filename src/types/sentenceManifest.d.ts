@@ -1,3 +1,5 @@
+import {AnimationSet} from "./configManifest";
+
 export type WordAlignment = {
   text: string;
   start: number;
@@ -13,4 +15,5 @@ export type ScriptSentence = {
   illustration: string;
   illustrationVideo?: object;
   wordsAlignment: WordAlignment[];
+  animations?: AnimationSet;
 }

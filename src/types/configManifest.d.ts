@@ -1,5 +1,21 @@
 import {ScriptSentence} from "./sentenceManifest";
 
+export type AnimationSpec = {
+  preset: string;
+  params?: Record<string, number | string | boolean>;
+};
+
+export type AnimationSet = {
+  in?: AnimationSpec;
+  active?: AnimationSpec;
+  out?: AnimationSpec;
+};
+
+export type StanceConfig = {
+  name: string;
+  animations?: AnimationSet;
+};
+
 export type PersonaConfig = {
   id: string;
   size: number;
@@ -9,7 +25,7 @@ export type PersonaConfig = {
   language: "en-US" | "fr-FR";
   promptPersonality: string;
   promptVideoMeta: string;
-  stances: string[];
+  stances: StanceConfig[];
   elevenLabsVoiceId: string;
   kokoroVoiceId: string;
 };
