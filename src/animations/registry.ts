@@ -57,9 +57,9 @@ const shake: AnimationPreset = {
   name: "shake",
   phase: "in",
   defaults: {
-    amplitudeX: 12,
-    amplitudeY: 6,
-    frequency: 1.8,
+    amplitudeX: 30,
+    amplitudeY: 15,
+    frequency: 2.4,
     durationMs: 300,
   },
   apply: ({frame, fps, width, params}) => {
