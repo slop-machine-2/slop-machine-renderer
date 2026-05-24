@@ -1,5 +1,7 @@
 FROM oven/bun:latest
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install Chrome dependencies
 RUN apt-get update && apt-get install -y \
   libnss3 \
