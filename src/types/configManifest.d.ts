@@ -18,6 +18,8 @@ export type StanceConfig = {
 
 export type PersonaConfig = {
   id: string;
+  /** S3 asset key; defaults to `id`. See the app-side PersonaConfig. */
+  assetId?: string;
   size: number;
   personaName: string;
   theme: string;

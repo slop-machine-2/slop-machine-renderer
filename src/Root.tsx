@@ -65,11 +65,16 @@ export const RemotionRoot: React.FC = () => {
               const index = i + 1;
               const lastWordEnd = sentence.wordsAlignment.at(-1)?.end ?? 0;
 
+              // Stance artwork lives under the persona's assetId (falls back to
+              // id), so dub variants can reuse another persona's images.
+              const speaker = config.personae.personae.find((p) => p.id === sentence.personaId);
+              const assetKey = speaker?.assetId ?? sentence.personaId;
+
               return {
                 sentence,
                 audioPath: `${s3Endpoint}/sentence_${index}.ogg`,
                 illustrationPath: `${s3Endpoint}/sentence_${index}_illustration.mp4`,
-                personaStancePath: `${s3RootEndpoint}/personae/${sentence.personaId}/${sentence.stance}.png`,
+                personaStancePath: `${s3RootEndpoint}/personae/${assetKey}/${sentence.stance}.png`,
                 durationInFrames: Math.ceil(lastWordEnd * config.video.fps),
               };
             });
