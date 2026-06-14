@@ -1,0 +1,23 @@
+# Production stack for the slop-machine-renderer repo: the Remotion renderer,
+# which is itself a queue worker (image CMD = listen-messages). Deployed by
+# Komodo from this repo (build context = repo root). Joins the external
+# `videomachine` network. Env injected by Komodo via --env-file.
+services:
+  video-renderer:
+    build: .
+    restart: unless-stopped
+    shm_size: "2gb"
+    environment:
+      - REMOTION_CONCURRENCY=${REMOTION_CONCURRENCY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT=${AWS_ENDPOINT}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET=${BUN_S3_BUCKET}
+      - QUEUE_HOST=${QUEUE_HOST}
+      - S3_HTTP_HOST=${S3_HTTP_HOST}
+    networks: [videomachine]
+
+networks:
+  videomachine:
+    external: true
