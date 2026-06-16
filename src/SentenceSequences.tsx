@@ -10,7 +10,6 @@ export const SentenceSequenceSchema = z.object({
   sentence: z.custom<ScriptSentence>(),
   audioPath: z.string(),
   illustrationPath: z.string(),
-  personaStancePath: z.string(),
   durationInFrames: z.number().min(1),
 });
 
@@ -111,12 +110,9 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
           : processedSentenceAudio.durationInFrames;
 
         const startFrame = cumulativeFrames;
-        const persona = config.personae.personae.find(p => p.id === processedSentenceAudio.sentence.personaId);
-        if (!persona) {
-          throw new Error('Persona not found!!')
-        }
-
         cumulativeFrames += processedSentenceAudio.durationInFrames;
+
+        const sentence = processedSentenceAudio.sentence;
 
         return (
           <Sequence
@@ -124,7 +120,22 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
             from={startFrame}
             durationInFrames={adjustedDuration}
           >
-            <Persona processedSentenceAudio={processedSentenceAudio} seed={config.seed + index} persona={persona}/>
+            {sentence.appearances.map((appearance, ai) => {
+              const persona = config.personae.personae.find(p => p.id === appearance.personaId);
+              if (!persona) {
+                throw new Error('Persona not found: ' + appearance.personaId)
+              }
+              return (
+                <Persona
+                  key={ai}
+                  appearance={appearance}
+                  persona={persona}
+                  durationInFrames={processedSentenceAudio.durationInFrames}
+                  s3RootEndpoint={s3RootEndpoint}
+                  seed={config.seed}
+                />
+              );
+            })}
             <AudioSegmentContent processedSentenceAudio={processedSentenceAudio} fps={config.video.fps}/>
           </Sequence>
         );

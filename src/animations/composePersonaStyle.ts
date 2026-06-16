@@ -13,17 +13,18 @@ type ComposeArgs = {
   fps: number;
   width: number;
   height: number;
+  playEntrance?: boolean;
   stanceAnimations?: AnimationSet;
-  sentenceAnimations?: AnimationSet;
+  appearanceAnimations?: AnimationSet;
 };
 
 function resolveSpec(
   phase: AnimationPhase,
   stanceAnimations?: AnimationSet,
-  sentenceAnimations?: AnimationSet,
+  appearanceAnimations?: AnimationSet,
 ): AnimationSpec | undefined {
-  const sentenceSpec = sentenceAnimations?.[phase];
-  if (sentenceSpec) return sentenceSpec;
+  const appearanceSpec = appearanceAnimations?.[phase];
+  if (appearanceSpec) return appearanceSpec;
   const stanceSpec = stanceAnimations?.[phase];
   if (stanceSpec) return stanceSpec;
   const defaultName = DEFAULT_PRESET_NAMES[phase];
@@ -50,17 +51,20 @@ export function composePersonaStyle({
   fps,
   width,
   height,
+  playEntrance = true,
   stanceAnimations,
-  sentenceAnimations,
+  appearanceAnimations,
 }: ComposeArgs): AnimationStyle {
   const baseCtx = {frame, durationInFrames, fps, width, height};
-  const phases: AnimationPhase[] = ["in", "active", "out"];
+  const phases: AnimationPhase[] = playEntrance
+    ? ["in", "active", "out"]
+    : ["active", "out"];
   const transforms: string[] = [];
   let opacity = 1;
   let opacityTouched = false;
 
   for (const phase of phases) {
-    const spec = resolveSpec(phase, stanceAnimations, sentenceAnimations);
+    const spec = resolveSpec(phase, stanceAnimations, appearanceAnimations);
     const style = runPhase(phase, baseCtx, spec);
     if (style.transform) transforms.push(style.transform);
     if (typeof style.opacity === "number") {

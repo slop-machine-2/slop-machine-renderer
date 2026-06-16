@@ -6,14 +6,25 @@ export type WordAlignment = {
   end: number;
 }
 
+export type Slot = "far-left" | "left" | "center" | "right" | "far-right";
+
+export type Appearance = {
+  personaId: string;
+  stance: string;
+  slot?: Slot;
+  posX?: number;
+  isEntrance?: boolean;
+  mirror?: boolean;
+  animations?: AnimationSet;
+}
+
 export type ScriptSentence = {
+  /** The speaker; also present in `appearances`. */
   personaId?: string;
-  posXRange: number,
-  posXOffset: number;
+  appearances: Appearance[];
   sentence: string;
   stance: string;
   illustration: string;
   illustrationVideo?: object;
   wordsAlignment: WordAlignment[];
-  animations?: AnimationSet;
 }

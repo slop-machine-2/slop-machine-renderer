@@ -13,6 +13,7 @@ export type AnimationSet = {
 
 export type StanceConfig = {
   name: string;
+  facing?: "left" | "right" | "camera";
   animations?: AnimationSet;
 };
 
@@ -21,6 +22,7 @@ export type PersonaConfig = {
   /** S3 asset key; defaults to `id`. See the app-side PersonaConfig. */
   assetId?: string;
   size: number;
+  mirrorable?: boolean;
   personaName: string;
   theme: string;
   themeVolume: number;
