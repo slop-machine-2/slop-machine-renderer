@@ -43,6 +43,8 @@ export const RemotionRoot: React.FC = () => {
             sentence: ScriptSentence,
             audioPath: string,
             illustrationPath: string,
+            illustrationKind: string,
+            loop: boolean,
             durationInFrames: number,
           }[],
         }}
@@ -63,11 +65,16 @@ export const RemotionRoot: React.FC = () => {
             const processedSentenceAudios = config.sentences.map((sentence, i) => {
               const index = i + 1;
               const lastWordEnd = sentence.wordsAlignment.at(-1)?.end ?? 0;
+              const illustrationFile = sentence.illustrationFile || `sentence_${index}_illustration.mp4`;
+              const isImage = sentence.illustrationKind === "image";
 
               return {
                 sentence,
                 audioPath: `${s3Endpoint}/sentence_${index}.ogg`,
-                illustrationPath: `${s3Endpoint}/sentence_${index}_illustration.mp4`,
+                illustrationPath: `${s3Endpoint}/${illustrationFile}`,
+                illustrationKind: isImage ? "image" : "video",
+                // Room backgrounds (location_*) loop to fill a scene; Pexels clips don't.
+                loop: !isImage && illustrationFile.startsWith("location_"),
                 durationInFrames: Math.ceil(lastWordEnd * config.video.fps),
               };
             });

@@ -26,5 +26,10 @@ export type ScriptSentence = {
   stance: string;
   illustration: string;
   illustrationVideo?: object;
+  locationKey?: string;
+  /** Background file name in the render folder (Pexels clip or room asset). */
+  illustrationFile?: string;
+  /** Whether the background is a still image or a video. */
+  illustrationKind?: "image" | "video";
   wordsAlignment: WordAlignment[];
 }

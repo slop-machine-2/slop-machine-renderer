@@ -1,4 +1,4 @@
-import {Html5Audio, Loop, OffthreadVideo, random, Sequence} from "remotion";
+import {Html5Audio, Img, Loop, OffthreadVideo, Video, random, Sequence} from "remotion";
 import {z} from "zod";
 import {AudioSegmentContent} from "./AudioSegmentContent";
 import {Persona} from "./Persona";
@@ -10,6 +10,10 @@ export const SentenceSequenceSchema = z.object({
   sentence: z.custom<ScriptSentence>(),
   audioPath: z.string(),
   illustrationPath: z.string(),
+  illustrationKind: z.string(),
+  // True for a looping room background (a Video that fills the whole scene),
+  // false for a one-shot Pexels clip (OffthreadVideo).
+  loop: z.boolean(),
   durationInFrames: z.number().min(1),
 });
 
@@ -35,7 +39,6 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
                                                                       s3RootEndpoint,
                                                                       renderId
                                                                     }) => {
-  let cumulativeFramesTrippy = 0;
   let cumulativeFrames = 0;
 
   const maxStartFrame = Math.max(0, satisfyingTotalFrames - durationInFrames);
@@ -43,6 +46,36 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
 
   if (!renderId) {
     return (<></>)
+  }
+
+  // Merge consecutive lines that share the same background file into one
+  // continuous Sequence, so a scene that stays in the same room never restarts
+  // its clip mid-scene. A change in source path (a new room, or a per-line
+  // Pexels clip) starts a new segment — i.e. a real cut.
+  const endPaddingFrames = Math.ceil(
+    config.video.fps * ((config.personae.endPaddingDurationMs || 0) / 1000),
+  );
+  type BgSegment = { path: string; kind: string; loop: boolean; from: number; duration: number };
+  const bgSegments: BgSegment[] = [];
+  let bgAcc = 0;
+  for (const file of processedSentenceAudios) {
+    const last = bgSegments[bgSegments.length - 1];
+    if (last && last.path === file.illustrationPath) {
+      last.duration += file.durationInFrames;
+    } else {
+      bgSegments.push({
+        path: file.illustrationPath,
+        kind: file.illustrationKind,
+        loop: file.loop,
+        from: bgAcc,
+        duration: file.durationInFrames,
+      });
+    }
+    bgAcc += file.durationInFrames;
+  }
+  // The final background covers the trailing end-padding, like the audio layer.
+  if (bgSegments.length) {
+    bgSegments[bgSegments.length - 1].duration += endPaddingFrames;
   }
 
   return (
@@ -71,31 +104,24 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
       </div>
 
       {/* 2. Dynamic Content Layer (Background + Persona + Audio) */}
-      {/* The Dynamic Background for this specific segment */}
+      {/* One Sequence per merged background segment (continuous across a scene) */}
       <div style={{height: '60%', width: '100%', position: 'absolute', top: 0}}>
-        {processedSentenceAudios.map((file, index) => {
-          const isLast = index === processedSentenceAudios.length - 1;
-          const adjustedDuration = isLast
-            ? file.durationInFrames + Math.ceil(config.video.fps * (config.personae.endPaddingDurationMs / 1000))
-            : file.durationInFrames;
-          const startFrame = cumulativeFramesTrippy;
-          cumulativeFramesTrippy += file.durationInFrames;
-
+        {bgSegments.map((seg, index) => {
+          const style = {width: '100%', height: '101%', objectFit: 'cover'} as const;
           return (
             <Sequence
-              key={index + 'trippy'}
-              from={startFrame}
-              durationInFrames={adjustedDuration}
+              key={'bg-' + index}
+              from={seg.from}
+              durationInFrames={seg.duration}
             >
-              <OffthreadVideo
-                src={file.illustrationPath}
-                style={{
-                  width: '100%',
-                  height: '101%',
-                  objectFit: 'cover'
-                }}
-                muted
-              />
+              {seg.kind === 'image' ? (
+                <Img src={seg.path} style={style}/>
+              ) : seg.loop ? (
+                // Room video: loop so it fills the whole scene without resetting.
+                <Video src={seg.path} style={style} muted loop/>
+              ) : (
+                <OffthreadVideo src={seg.path} style={style} muted/>
+              )}
             </Sequence>
           );
         })}
