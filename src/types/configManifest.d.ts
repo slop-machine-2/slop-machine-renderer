@@ -53,4 +53,6 @@ export type OutputConfig = {
   sentences: ScriptSentence[];
   topic: object;
   satisfyingVideo: string;
+  /** Filename (in the render folder) of a still shown as frame 0 — the Shorts thumbnail. */
+  firstFrameImage?: string;
 };

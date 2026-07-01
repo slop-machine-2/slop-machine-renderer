@@ -78,11 +78,46 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
     bgSegments[bgSegments.length - 1].duration += endPaddingFrames;
   }
 
+  // Theme (background music) segments. Each line plays its own theme when the
+  // writer assigned one (a mood shift), otherwise the base `config.personae.theme`.
+  // Consecutive lines sharing a theme merge into one looping segment so the music
+  // never restarts mid-mood; a change of theme starts a new track exactly on the
+  // frame that line begins. Lines with no theme AND no base track play silence.
+  type ThemeSegment = { theme: string; from: number; duration: number };
+  const themeSegments: ThemeSegment[] = [];
+  let themeAcc = 0;
+  for (const file of processedSentenceAudios) {
+    const theme = file.sentence.theme || config.personae.theme || '';
+    const last = themeSegments[themeSegments.length - 1];
+    if (last && last.theme === theme) {
+      last.duration += file.durationInFrames;
+    } else {
+      themeSegments.push({ theme, from: themeAcc, duration: file.durationInFrames });
+    }
+    themeAcc += file.durationInFrames;
+  }
+  if (themeSegments.length) {
+    themeSegments[themeSegments.length - 1].duration += endPaddingFrames;
+  }
+
   return (
     <>
-      {/* 1. Global Elements (Satisfying video & Theme Music) */}
-      <Html5Audio src={`${s3RootEndpoint}/assets/themes/${config.personae.theme}.ogg`}
-                  volume={config.personae.themeVolume} loop/>
+      {/* 1. Theme Music — one looping track per mood segment (see themeSegments) */}
+      {themeSegments.map((seg, index) =>
+        seg.theme ? (
+          <Sequence
+            key={'theme-' + index}
+            from={seg.from}
+            durationInFrames={seg.duration}
+          >
+            <Html5Audio
+              src={`${s3RootEndpoint}/assets/themes/${seg.theme}.ogg`}
+              volume={config.personae.themeVolume}
+              loop
+            />
+          </Sequence>
+        ) : null,
+      )}
 
       <div
         style={{
@@ -166,6 +201,17 @@ export const SentenceSequences: React.FC<SentenceSequencesProps> = ({
           </Sequence>
         );
       })}
+
+      {/* First-frame image (Shorts thumbnail): a single frame at index 0, full-bleed
+          on top of everything, so YouTube grabs it as the cover. Invisible in playback. */}
+      {config.firstFrameImage ? (
+        <Sequence from={0} durationInFrames={1}>
+          <Img
+            src={`${s3Endpoint}/${config.firstFrameImage}`}
+            style={{position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 100}}
+          />
+        </Sequence>
+      ) : null}
     </>
   );
 };

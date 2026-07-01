@@ -27,6 +27,8 @@ export type ScriptSentence = {
   illustration: string;
   illustrationVideo?: object;
   locationKey?: string;
+  /** Theme/mood track that starts on this line (from the config palette), if any. */
+  theme?: string;
   /** Background file name in the render folder (Pexels clip or room asset). */
   illustrationFile?: string;
   /** Whether the background is a still image or a video. */
